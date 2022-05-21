@@ -82,14 +82,36 @@ namespace math
 		}
 	}
 
+	template<typename A>
+	concept Angle = std::is_arithmetic_v<typename A::angle_type>;
+
 	template<typename T>
 	requires std::is_floating_point_v<T>
 	struct Radians
 	{
+	public:
+		using angle_type = T;
+
 		constexpr Radians() : angle() {}
 		constexpr Radians(const T& angle) : angle(angle) {}
 		constexpr Radians(T&& angle) : angle(std::move(angle)) {}
+		template<Angle A>
+		constexpr Radians(const A& angle) : angle(angle.radians<T>()) {}
 
+		template<typename A = T>
+		requires std::is_floating_point_v<A>
+		constexpr A radians() const { return static_cast<A>(angle); }
+		template<typename A = T>
+		requires std::is_arithmetic_v<A>
+		constexpr A degrees() const { return static_cast<A>(detail::high_cast<A, T>(angle) * constants<typename detail::ranked_type<T, A>::higher>::inverse_pi * (typename detail::ranked_type<T, A>::higher)180); }
+		template<typename A = T>
+		requires std::is_arithmetic_v<A>
+		constexpr A pi_factor() const { return static_cast<A>(detail::high_cast<A, T>(angle) * constants<typename detail::ranked_type<T, A>::higher>::inverse_pi); }
+
+		T& native() { return angle; }
+		const T& native() const { return angle; }
+
+	private:
 		T angle;
 	};
 
@@ -97,17 +119,29 @@ namespace math
 	requires std::is_arithmetic_v<T>
 	struct Degrees
 	{
+	public:
+		using angle_type = T;
+
 		constexpr Degrees() : angle() {}
 		constexpr Degrees(const T& angle) : angle(angle) {}
 		constexpr Degrees(T&& angle) : angle(std::move(angle)) {}
-		template<typename T2 = T>
-		requires std::is_floating_point_v<T2>
-		constexpr Degrees(const Radians<T2>& angle) : angle(static_cast<T>(detail::high_cast<T, T2>(angle.angle) * (typename detail::ranked_type<T, T2>::higher)180 * constants<typename detail::ranked_type<T, T2>::higher>::inverse_pi)) {}
+		template<Angle A>
+		constexpr Degrees(const A& angle) : angle(angle.degrees<T>()) {}
 
-		template<typename T2 = T>
-		requires std::is_floating_point_v<T2>
-		constexpr operator Radians<T2>() const { return static_cast<T2>(detail::high_cast<T, T2>(angle) * constants<typename detail::ranked_type<T, T2>::higher>::pi / (typename detail::ranked_type<T, T2>::higher)180);  }
+		template<typename A = typename detail::ranked_type<T, float>::higher>
+		requires std::is_floating_point_v<A>
+		constexpr A radians() const { return static_cast<A>(detail::high_cast<T, A>(angle) * constants<typename detail::ranked_type<T, A>::higher>::pi / (typename detail::ranked_type<T, A>::higher)180); }
+		template<typename A = T>
+		requires std::is_arithmetic_v<A>
+		constexpr A degrees() const { return static_cast<A>(angle); }
+		template<typename A = T>
+		requires std::is_arithmetic_v<A>
+		constexpr A pi_factor() const { return static_cast<A>(detail::high_cast<T, A>(angle) * constants<typename detail::ranked_type<T, A>::higher>::pi); }
 
+		T& native() { return angle; }
+		const T& native() const { return angle; }
+
+	private:
 		T angle;
 	};
 
@@ -115,23 +149,29 @@ namespace math
 	requires std::is_arithmetic_v<T>
 	struct PiFactor
 	{
+	public:
+		using angle_type = T;
+
 		constexpr PiFactor() : angle() {}
 		constexpr PiFactor(const T& angle) : angle(angle) {}
 		constexpr PiFactor(T&& angle) : angle(std::move(angle)) {}
-		template<typename T2 = T>
-		requires std::is_floating_point_v<T2>
-		constexpr PiFactor(const Radians<T2>& angle) : angle(static_cast<T>(detail::high_cast<T, T2>(angle.angle) * constants<typename detail::ranked_type<T, T2>::higher>::inverse_pi)) {}
-		template<typename T2 = T>
-		requires std::is_arithmetic_v<T2>
-		constexpr PiFactor(const Degrees<T2>& angle) : angle(static_cast<T>(detail::high_cast<T, T2>(angle.angle) / (typename detail::ranked_type<T, T2>::higher)180)) {}
+		template<Angle A>
+		constexpr PiFactor(const A& angle) : angle(angle.pi_factor<T>()) {}
 
-		template<typename T2 = T>
-		requires std::is_floating_point_v<T2>
-		constexpr operator Radians<T2>() const { return static_cast<T2>(detail::high_cast<T, T2>(angle) * constants<typename detail::ranked_type<T, T2>::higher>::pi); }
-		template<typename T2 = T>
-		requires std::is_arithmetic_v<T2>
-		constexpr operator Degrees<T2>() const { return static_cast<T2>(detail::high_cast<T, T2>(angle) * (typename detail::ranked_type<T, T2>::higher)180); }
+		template<typename A = typename detail::ranked_type<T, float>::higher>
+		requires std::is_floating_point_v<A>
+		constexpr A radians() const { return static_cast<A>(detail::high_cast<T, A>(angle) * constants<typename detail::ranked_type<T, A>::higher>::pi); }
+		template<typename A = T>
+		requires std::is_arithmetic_v<A>
+		constexpr A degrees() const { return static_cast<A>(detail::high_cast<T, A>(angle) * (typename detail::ranked_type<T, A>::higher)180); }
+		template<typename A = T>
+		requires std::is_arithmetic_v<A>
+		constexpr A pi_factor() const { return static_cast<A>(angle); }
 
+		T& native() { return angle; }
+		const T& native() const { return angle; }
+
+	private:
 		T angle;
 	};
 
@@ -185,23 +225,20 @@ namespace math
 		};
 	}
 
-	template<typename T = double>
-	requires std::is_floating_point_v<T>
-	static T sin(const Radians<T>& angle)
+	template<Angle A, typename T = typename detail::ranked_type<float, typename A::angle_type>::higher>
+	static T sin(const A& angle)
 	{
-		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::sin(angle.angle);
+		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::sin(angle.radians<T>());
 	}
-	template<typename T = double>
-	requires std::is_floating_point_v<T>
-	static T cos(const Radians<T>& angle)
+	template<Angle A, typename T = typename detail::ranked_type<float, typename A::angle_type>::higher>
+	static T cos(const A& angle)
 	{
-		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::cos(angle.angle);
+		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::cos(angle.radians<T>());
 	}
-	template<typename T = double>
-	requires std::is_floating_point_v<T>
-	static T tan(const Radians<T>& angle)
+	template<Angle A, typename T = typename detail::ranked_type<float, typename A::angle_type>::higher>
+	static T tan(const A& angle)
 	{
-		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::tan(angle.angle);
+		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::tan(angle.radians<T>());
 	}
 	template<typename T = double>
 	requires std::is_floating_point_v<T>
@@ -234,16 +271,30 @@ namespace math
 		return detail::GoniometricFunctions<typename std::remove_cvref<T>::type>::atan2(y, x);
 	}
 
-	static double sin(const Radians<double>& angle)
+	static constexpr Degrees<int> operator""deg(unsigned long long int degrees)
 	{
-		return detail::GoniometricFunctions<double>::sin(angle.angle);
+		return degrees % 360;
 	}
-	static double cos(const Radians<double>& angle)
+	static constexpr Degrees<double> operator""deg(long double degrees)
 	{
-		return detail::GoniometricFunctions<double>::cos(angle.angle);
+		return static_cast<double>(degrees);
 	}
-	static double tan(const Radians<double>& angle)
+
+	static constexpr Radians<float> operator""rad(unsigned long long int degrees)
 	{
-		return detail::GoniometricFunctions<double>::tan(angle.angle);
+		return static_cast<float>(degrees);
+	}
+	static constexpr Radians<double> operator""rad(long double degrees)
+	{
+		return static_cast<double>(degrees);
+	}
+
+	static constexpr PiFactor<float> operator""pi(unsigned long long int degrees)
+	{
+		return static_cast<float>(degrees);
+	}
+	static constexpr PiFactor<double> operator""pi(long double degrees)
+	{
+		return static_cast<double>(degrees);
 	}
 }

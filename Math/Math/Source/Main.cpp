@@ -20,6 +20,15 @@ struct A
 	static constexpr int value = a;
 };
 
+template<typename T>
+void prompt(const char* prompt, T& x)
+{
+	std::cout << prompt;
+	std::cin >> x;
+}
+
+#define print(x) std::cout << #x << ": " << x << '\n'
+
 int main()
 {
 	Radians<double> radians;
@@ -28,17 +37,15 @@ int main()
 
 	while (true)
 	{
-		Vector<2, float> a;
-		Vector<2, float> b;
-		std::cout << "a.x:      ";
-		std::cin >> a.x;
-		std::cout << "a.y:      ";
-		std::cin >> a.y;
-		std::cout << "b.x:      ";
-		std::cin >> b.x;
-		std::cout << "b.y:      ";
-		std::cin >> b.y;
-		std::cout << "angle:    " << Degrees<int>(angle(a, b)).angle << "\n\n";
+		Vector<2, float> vector;
+		Degrees<float> angle;
+		float length;
+		prompt("angle:   ", angle.native());
+		prompt("length:  ", length);
+		vector = Vector<2, float>(angle, length);
+		print(vector.x);
+		print(vector.y);
+		std::cout << '\n';
 	}
 
 	std::cin.ignore();

@@ -139,6 +139,8 @@ namespace math
 		constexpr Vector(const Coordinates<2, T>& coordinates) : VectorBase<2, T>(coordinates) {}
 		constexpr Vector(Coordinates<2, T>&& coordinates) : VectorBase<2, T>(std::move(coordinates)) {}
 		constexpr Vector(const Coordinates<2, T>& a, const Coordinates<2, T>& b) : VectorBase<2, T>(b - a) {}
+		template<Angle A>
+		Vector(const A& angle, const T& length) : VectorBase<2, T>(static_cast<T>(cos(angle)) * length, static_cast<T>(sin(angle))* length) {}
 
 		template<typename A = double>
 		Radians<A> angle() const { return detail::vector_angle_helper<A>(*this); }
