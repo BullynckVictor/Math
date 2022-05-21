@@ -191,7 +191,7 @@ namespace math
 				return ::sqrtl(static_cast<long double>(value));
 		}
 		else
-			return ::sqrt(static_cast<double>(value));
+			return static_cast<T>(::sqrtf(static_cast<float>(value)));
 	}
 
 	template<Tuple T1, SameTuple<T1::dimensions, typename T1::value_type> T2>

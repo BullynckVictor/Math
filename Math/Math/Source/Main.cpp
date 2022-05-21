@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Vector.h"
+#include "Angle.h"
 
 using namespace math;
 
@@ -19,14 +20,27 @@ struct A
 	static constexpr int value = a;
 };
 
-
 int main()
 {
-	std::cout << A<(int)foo()>::value << '\n';
-	Vector<2, float> vector;
-	vector.normalise();
+	Radians<double> radians;
+	Degrees<int> degrees;
+	PiFactor<double> pifactor;
 
-	std::cout << distance(Point<2, float>(5, 3), Point<2, float>(1, 7)) << '\n';
-	std::cout << vector.x << ", " << vector.y << '\n';
+	while (true)
+	{
+		Vector<2, float> a;
+		Vector<2, float> b;
+		std::cout << "a.x:      ";
+		std::cin >> a.x;
+		std::cout << "a.y:      ";
+		std::cin >> a.y;
+		std::cout << "b.x:      ";
+		std::cin >> b.x;
+		std::cout << "b.y:      ";
+		std::cin >> b.y;
+		std::cout << "angle:    " << Degrees<int>(angle(a, b)).angle << "\n\n";
+	}
+
+	std::cin.ignore();
 	std::cin.ignore();
 }
